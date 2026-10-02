@@ -1,0 +1,108 @@
+.analytics-page {
+  padding: 40px;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.analytics-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 32px;
+  align-items: flex-end;
+  margin-bottom: 36px;
+}
+
+.eyebrow {
+  letter-spacing: .16em;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+h1 {
+  font-size: clamp(48px, 8vw, 110px);
+  line-height: .86;
+  margin: 12px 0 20px;
+}
+
+.analytics-header p {
+  max-width: 700px;
+  line-height: 1.6;
+}
+
+.source-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+button {
+  border: 1px solid currentColor;
+  background: transparent;
+  padding: 12px 16px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.state {
+  display: flex;
+  gap: 28px;
+  align-items: flex-start;
+  padding: 36px;
+  border: 1px solid currentColor;
+  margin-bottom: 30px;
+}
+
+.state > strong {
+  font-size: 52px;
+}
+
+.state h2 {
+  margin: 8px 0;
+}
+
+.data-banner {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.data-banner span,
+.data-banner strong,
+.data-banner em {
+  border: 1px solid currentColor;
+  padding: 8px 12px;
+  font-style: normal;
+}
+
+.table-shell {
+  overflow-x: auto;
+  border: 1px solid currentColor;
+}
+
+table {
+  width: 100%;
+  min-width: 1100px;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 13px 12px;
+  border-bottom: 1px solid rgba(128,128,128,.35);
+  text-align: right;
+  white-space: nowrap;
+}
+
+th:first-child,
+td:first-child,
+th:nth-child(2),
+td:nth-child(2) {
+  text-align: left;
+}
+
+th {
+  font-size: 11px;
+  letter-spacing: .08em;
+}

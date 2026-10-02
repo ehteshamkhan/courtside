@@ -1,0 +1,357 @@
+<main class="comparison-page">
+
+  <header class="comparison-header">
+
+    <span class="eyebrow">
+      COURTSIDE / M7
+    </span>
+
+    <h1>
+      ANALYTICS<br>
+      COMPARE.
+    </h1>
+
+    <p>
+      Side-by-side factual comparison of verified NBA
+      statistics. No rankings or winner logic are applied.
+    </p>
+
+    <div class="controls">
+
+      <button
+        type="button"
+        (click)="useLive()">
+
+        LIVE API
+
+      </button>
+
+      <button
+        type="button"
+        (click)="useFixture()">
+
+        DEVELOPMENT FIXTURE
+
+      </button>
+
+    </div>
+
+  </header>
+
+
+  <section
+    class="state"
+    *ngIf="loading">
+
+    <strong>00</strong>
+
+    <div>
+      <span>COURTSIDE DATA FEED</span>
+      <h2>LOADING COMPARISON DATA.</h2>
+    </div>
+
+  </section>
+
+
+  <section
+    class="state"
+    *ngIf="!loading && dataState === 'API_ERROR'">
+
+    <strong>!</strong>
+
+    <div>
+      <span>API ERROR</span>
+      <h2>ANALYTICS DATA UNAVAILABLE.</h2>
+      <p>{{ errorMessage }}</p>
+
+      <button
+        type="button"
+        (click)="useFixture()">
+
+        OPEN DEVELOPMENT FIXTURE
+
+      </button>
+    </div>
+
+  </section>
+
+
+  <section
+    *ngIf="!loading && dataState === 'DATA'">
+
+    <div class="selection-grid">
+
+      <label>
+        PLAYER A
+
+        <select
+          [(ngModel)]="selectedPlayerA"
+          (change)="onSelectionChange()">
+
+          <option value="">
+            Select player
+          </option>
+
+          <option
+            *ngFor="let player of players"
+            [value]="player.PLAYER_ID">
+
+            {{ value(player.PLAYER_NAME) }}
+
+          </option>
+
+        </select>
+
+      </label>
+
+
+      <label>
+        PLAYER B
+
+        <select
+          [(ngModel)]="selectedPlayerB"
+          (change)="onSelectionChange()">
+
+          <option value="">
+            Select player
+          </option>
+
+          <option
+            *ngFor="let player of players"
+            [value]="player.PLAYER_ID">
+
+            {{ value(player.PLAYER_NAME) }}
+
+          </option>
+
+        </select>
+
+      </label>
+
+
+      <label>
+        TEAM A
+
+        <select
+          [(ngModel)]="selectedTeamA"
+          (change)="onSelectionChange()">
+
+          <option value="">
+            Select team
+          </option>
+
+          <option
+            *ngFor="let team of teams"
+            [value]="team.TEAM_ID">
+
+            {{ value(team.TEAM_NAME) }}
+
+          </option>
+
+        </select>
+
+      </label>
+
+
+      <label>
+        TEAM B
+
+        <select
+          [(ngModel)]="selectedTeamB"
+          (change)="onSelectionChange()">
+
+          <option value="">
+            Select team
+          </option>
+
+          <option
+            *ngFor="let team of teams"
+            [value]="team.TEAM_ID">
+
+            {{ value(team.TEAM_NAME) }}
+
+          </option>
+
+        </select>
+
+      </label>
+
+    </div>
+
+
+    <div class="comparison-grid">
+
+      <article class="comparison-card">
+
+        <span>PLAYER A</span>
+
+        <h2>
+          {{ value(playerA?.PLAYER_NAME) }}
+        </h2>
+
+        <p>
+          Team:
+          {{ value(playerA?.TEAM_ABBREVIATION) }}
+        </p>
+
+        <dl>
+
+          <dt>GP</dt>
+          <dd>{{ value(playerA?.GP) }}</dd>
+
+          <dt>MIN</dt>
+          <dd>{{ value(playerA?.MIN) }}</dd>
+
+          <dt>PTS</dt>
+          <dd>{{ value(playerA?.PTS) }}</dd>
+
+          <dt>REB</dt>
+          <dd>{{ value(playerA?.REB) }}</dd>
+
+          <dt>AST</dt>
+          <dd>{{ value(playerA?.AST) }}</dd>
+
+          <dt>FG%</dt>
+          <dd>{{ percentage(playerA?.FG_PCT) }}</dd>
+
+          <dt>3P%</dt>
+          <dd>{{ percentage(playerA?.FG3_PCT) }}</dd>
+
+          <dt>FT%</dt>
+          <dd>{{ percentage(playerA?.FT_PCT) }}</dd>
+
+        </dl>
+
+      </article>
+
+
+      <article class="comparison-card">
+
+        <span>PLAYER B</span>
+
+        <h2>
+          {{ value(playerB?.PLAYER_NAME) }}
+        </h2>
+
+        <p>
+          Team:
+          {{ value(playerB?.TEAM_ABBREVIATION) }}
+        </p>
+
+        <dl>
+
+          <dt>GP</dt>
+          <dd>{{ value(playerB?.GP) }}</dd>
+
+          <dt>MIN</dt>
+          <dd>{{ value(playerB?.MIN) }}</dd>
+
+          <dt>PTS</dt>
+          <dd>{{ value(playerB?.PTS) }}</dd>
+
+          <dt>REB</dt>
+          <dd>{{ value(playerB?.REB) }}</dd>
+
+          <dt>AST</dt>
+          <dd>{{ value(playerB?.AST) }}</dd>
+
+          <dt>FG%</dt>
+          <dd>{{ percentage(playerB?.FG_PCT) }}</dd>
+
+          <dt>3P%</dt>
+          <dd>{{ percentage(playerB?.FG3_PCT) }}</dd>
+
+          <dt>FT%</dt>
+          <dd>{{ percentage(playerB?.FT_PCT) }}</dd>
+
+        </dl>
+
+      </article>
+
+    </div>
+
+
+    <div class="comparison-grid">
+
+      <article class="comparison-card">
+
+        <span>TEAM A</span>
+
+        <h2>
+          {{ value(teamA?.TEAM_NAME) }}
+        </h2>
+
+        <dl>
+
+          <dt>GP</dt>
+          <dd>{{ value(teamA?.GP) }}</dd>
+
+          <dt>W</dt>
+          <dd>{{ value(teamA?.W) }}</dd>
+
+          <dt>L</dt>
+          <dd>{{ value(teamA?.L) }}</dd>
+
+          <dt>WIN%</dt>
+          <dd>{{ percentage(teamA?.W_PCT) }}</dd>
+
+          <dt>PTS</dt>
+          <dd>{{ value(teamA?.PTS) }}</dd>
+
+          <dt>REB</dt>
+          <dd>{{ value(teamA?.REB) }}</dd>
+
+          <dt>AST</dt>
+          <dd>{{ value(teamA?.AST) }}</dd>
+
+          <dt>+/-</dt>
+          <dd>{{ value(teamA?.PLUS_MINUS) }}</dd>
+
+        </dl>
+
+      </article>
+
+
+      <article class="comparison-card">
+
+        <span>TEAM B</span>
+
+        <h2>
+          {{ value(teamB?.TEAM_NAME) }}
+        </h2>
+
+        <dl>
+
+          <dt>GP</dt>
+          <dd>{{ value(teamB?.GP) }}</dd>
+
+          <dt>W</dt>
+          <dd>{{ value(teamB?.W) }}</dd>
+
+          <dt>L</dt>
+          <dd>{{ value(teamB?.L) }}</dd>
+
+          <dt>WIN%</dt>
+          <dd>{{ percentage(teamB?.W_PCT) }}</dd>
+
+          <dt>PTS</dt>
+          <dd>{{ value(teamB?.PTS) }}</dd>
+
+          <dt>REB</dt>
+          <dd>{{ value(teamB?.REB) }}</dd>
+
+          <dt>AST</dt>
+          <dd>{{ value(teamB?.AST) }}</dd>
+
+          <dt>+/-</dt>
+          <dd>{{ value(teamB?.PLUS_MINUS) }}</dd>
+
+        </dl>
+
+      </article>
+
+    </div>
+
+  </section>
+
+</main>

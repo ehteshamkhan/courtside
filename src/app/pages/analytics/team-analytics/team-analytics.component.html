@@ -1,0 +1,195 @@
+<main class="analytics-page">
+
+  <header class="analytics-header">
+
+    <div>
+      <span class="eyebrow">
+        COURTSIDE / M7
+      </span>
+
+      <h1>
+        TEAM<br>
+        ANALYTICS.
+      </h1>
+
+      <p>
+        Verified NBA team statistics from the
+        LeagueDashTeamStats data structure.
+      </p>
+    </div>
+
+    <div class="source-controls">
+
+      <button
+        type="button"
+        (click)="useLive()">
+
+        LIVE API
+
+      </button>
+
+      <button
+        type="button"
+        (click)="useFixture()">
+
+        DEVELOPMENT FIXTURE
+
+      </button>
+
+    </div>
+
+  </header>
+
+
+  <section
+    class="state"
+    *ngIf="loading">
+
+    <strong>00</strong>
+
+    <div>
+      <span>COURTSIDE DATA FEED</span>
+      <h2>LOADING TEAM DATA.</h2>
+      <p>Requesting the analytics endpoint.</p>
+    </div>
+
+  </section>
+
+
+  <section
+    class="state"
+    *ngIf="!loading && dataState === 'API_ERROR'">
+
+    <strong>!</strong>
+
+    <div>
+      <span>API ERROR</span>
+      <h2>LIVE DATA UNAVAILABLE.</h2>
+      <p>{{ errorMessage }}</p>
+
+      <button
+        type="button"
+        (click)="useFixture()">
+
+        OPEN DEVELOPMENT FIXTURE
+
+      </button>
+    </div>
+
+  </section>
+
+
+  <section
+    class="state"
+    *ngIf="!loading && dataState === 'NO_DATA'">
+
+    <strong>00</strong>
+
+    <div>
+      <span>NO DATA</span>
+      <h2>NO TEAM ROWS.</h2>
+      <p>
+        The requested NBA analytics response contained
+        no team records.
+      </p>
+    </div>
+
+  </section>
+
+
+  <section
+    *ngIf="!loading && dataState === 'DATA'">
+
+    <div class="data-banner">
+
+      <span>
+        {{ source === 'fixture'
+          ? 'DEVELOPMENT FIXTURE'
+          : 'LIVE NBA API' }}
+      </span>
+
+      <strong>
+        {{ season }}
+      </strong>
+
+      <em>
+        {{ rows.length }} TEAMS
+      </em>
+
+    </div>
+
+
+    <div class="table-shell">
+
+      <table>
+
+        <thead>
+
+          <tr>
+            <th>TEAM</th>
+            <th>GP</th>
+            <th>W</th>
+            <th>L</th>
+            <th>WIN%</th>
+            <th>PTS</th>
+            <th>REB</th>
+            <th>AST</th>
+            <th>STL</th>
+            <th>BLK</th>
+            <th>FG%</th>
+            <th>3P%</th>
+            <th>FT%</th>
+            <th>+/-</th>
+          </tr>
+
+        </thead>
+
+        <tbody>
+
+          <tr *ngFor="let row of rows">
+
+            <td>
+              <strong>
+                {{ value(row.TEAM_NAME) }}
+              </strong>
+            </td>
+
+            <td>{{ value(row.GP) }}</td>
+            <td>{{ value(row.W) }}</td>
+            <td>{{ value(row.L) }}</td>
+
+            <td>
+              {{ percentage(row.W_PCT) }}
+            </td>
+
+            <td>{{ value(row.PTS) }}</td>
+            <td>{{ value(row.REB) }}</td>
+            <td>{{ value(row.AST) }}</td>
+            <td>{{ value(row.STL) }}</td>
+            <td>{{ value(row.BLK) }}</td>
+
+            <td>
+              {{ percentage(row.FG_PCT) }}
+            </td>
+
+            <td>
+              {{ percentage(row.FG3_PCT) }}
+            </td>
+
+            <td>
+              {{ percentage(row.FT_PCT) }}
+            </td>
+
+            <td>{{ value(row.PLUS_MINUS) }}</td>
+
+          </tr>
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+  </section>
+
+</main>
