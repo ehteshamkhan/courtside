@@ -86,9 +86,30 @@ export const routes: Routes = [
   },
 
   {
+    path: 'analytics/players',
+    loadComponent: () =>
+      import('./pages/analytics/player-analytics/player-analytics.component')
+        .then(m => m.PlayerAnalyticsComponent)
+  },
+
+  {
+    path: 'analytics/teams',
+    loadComponent: () =>
+      import('./pages/analytics/team-analytics/team-analytics.component')
+        .then(m => m.TeamAnalyticsComponent)
+  },
+
+  {
+    path: 'analytics/compare',
+    loadComponent: () =>
+      import('./pages/analytics/comparison/comparison.component')
+        .then(m => m.ComparisonComponent)
+  },
+  {
     path: '**',
     redirectTo: ''
   }
 
 ];
+
 

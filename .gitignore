@@ -1,0 +1,89 @@
+# Dependencies
+node_modules/
+.npm/
+.pnpm-store/
+
+# Angular generated files
+dist/
+.angular/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Certificates and keys
+*.key
+*.pem
+*.p12
+*.pfx
+*.crt
+*.cer
+
+# SSH
+.ssh/
+id_rsa
+id_rsa.pub
+id_ed25519
+id_ed25519.pub
+
+# Logs
+*.log
+logs/
+
+# IDE
+.vscode/
+.idea/
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# Temporary
+*.tmp
+*.temp
+*.swp
+*.swo
+
+# Backup / historical files
+*.bak
+*.backup
+*.old
+*.orig
+*backup*
+*BACKUP*
+*.before-*
+*.before-*
+
+# Historical project material
+milestone-reports/
+M6-Audit/
+M7-Audit/
+M8-Audit/
+audit/
+forensics/
+reports/
+
+# Deployment
+M8-Deployment/
+deployment/
+deploy/
+oracle/
+server-backups/
+*.zip
+
+# Local deployment scripts
+fin.ps1
+set.ps1
+
+# Historical repair scripts
+mmi.ps1.before-*
+milestone6piece.ps1.backup-*
+Run-CourtsideMilestone*.ps1
+
+# Coverage
+coverage/
+.nyc_output/
+
+# OS
+.DS_Store

@@ -1121,6 +1121,247 @@ app.get(
 // SERVER START
 // ============================================================
 
+
+
+/* ============================================================
+   M7 ANALYTICS — BEGIN
+   Advanced Player & Team Analytics
+   ============================================================ */
+
+// ------------------------------------------------------------
+// PLAYER ANALYTICS
+// GET /api/nba/analytics/players
+//
+// Verified NBA Stats endpoint:
+//   leaguedashplayerstats
+//
+// Verified live fields only.
+// ------------------------------------------------------------
+
+app.get(
+    "/api/nba/analytics/players",
+    async (req, res) => {
+
+        const season =
+            String(
+                req.query.season ||
+                currentSeason()
+            ).trim();
+
+        try {
+
+            const data =
+                await nbaFetchWithRetry(
+                    "leaguedashplayerstats",
+                    {
+                        LeagueID: "00",
+                        PerMode: "PerGame",
+                        PlusMinus: "N",
+                        PaceAdjust: "N",
+                        Rank: "N",
+                        Season: season,
+                        SeasonType: "Regular Season",
+                        MeasureType: "Base",
+                        Month: "0",
+                        OpponentTeamID: "0",
+                        Period: "0",
+                        PlayerExperience: "",
+                        PlayerPosition: "",
+                        SeasonSegment: "",
+                        TeamID: "0",
+                        VsConference: "",
+                        VsDivision: ""
+                    }
+                );
+
+            const result =
+                resultSet(
+                    data,
+                    "LeagueDashPlayerStats"
+                );
+
+            if (
+                !result ||
+                !Array.isArray(result.headers) ||
+                !Array.isArray(result.rowSet)
+            ) {
+
+                return res.json({
+                    ok: true,
+                    season,
+                    dataState: "NO_DATA",
+                    source: "LeagueDashPlayerStats",
+                    fields: [],
+                    rows: []
+                });
+            }
+
+            if (result.rowSet.length === 0) {
+
+                return res.json({
+                    ok: true,
+                    season,
+                    dataState: "NO_DATA",
+                    source: "LeagueDashPlayerStats",
+                    fields: result.headers,
+                    rows: []
+                });
+            }
+
+            return res.json({
+                ok: true,
+                season,
+                dataState: "DATA",
+                source: "LeagueDashPlayerStats",
+                fields: result.headers,
+                rows: result.rowSet
+            });
+
+        }
+        catch (error) {
+
+            console.error(
+                "[M7] Player analytics request failed:",
+                error.message
+            );
+
+            return res.status(502).json({
+                ok: false,
+                season,
+                dataState: "API_ERROR",
+                source: "LeagueDashPlayerStats",
+                fields: [],
+                rows: [],
+                error: error.message
+            });
+        }
+    }
+);
+
+// ------------------------------------------------------------
+// TEAM ANALYTICS
+// GET /api/nba/analytics/teams
+//
+// Verified NBA Stats endpoint:
+//   leaguedashteamstats
+//
+// Verified live fields only.
+// ------------------------------------------------------------
+
+app.get(
+    "/api/nba/analytics/teams",
+    async (req, res) => {
+
+        const season =
+            String(
+                req.query.season ||
+                currentSeason()
+            ).trim();
+
+        try {
+
+            const data =
+                await nbaFetchWithRetry(
+                    "leaguedashteamstats",
+                    {
+                        Conference: "",
+                        Division: "",
+                        GameScope: "",
+                        GameSegment: "",
+                        LastNGames: "0",
+                        LeagueID: "00",
+                        Location: "",
+                        MeasureType: "Base",
+                        Month: "0",
+                        OpponentTeamID: "0",
+                        Outcome: "",
+                        PaceAdjust: "N",
+                        PerMode: "PerGame",
+                        Period: "0",
+                        PlayerExperience: "",
+                        PlayerPosition: "",
+                        PlusMinus: "N",
+                        Rank: "N",
+                        Season: season,
+                        SeasonSegment: "",
+                        SeasonType: "Regular Season",
+                        ShotClockRange: "",
+                        StarterBench: "",
+                        TeamID: "0",
+                        VsConference: "",
+                        VsDivision: ""
+                    }
+                );
+
+            const result =
+                resultSet(
+                    data,
+                    "LeagueDashTeamStats"
+                );
+
+            if (
+                !result ||
+                !Array.isArray(result.headers) ||
+                !Array.isArray(result.rowSet)
+            ) {
+
+                return res.json({
+                    ok: true,
+                    season,
+                    dataState: "NO_DATA",
+                    source: "LeagueDashTeamStats",
+                    fields: [],
+                    rows: []
+                });
+            }
+
+            if (result.rowSet.length === 0) {
+
+                return res.json({
+                    ok: true,
+                    season,
+                    dataState: "NO_DATA",
+                    source: "LeagueDashTeamStats",
+                    fields: result.headers,
+                    rows: []
+                });
+            }
+
+            return res.json({
+                ok: true,
+                season,
+                dataState: "DATA",
+                source: "LeagueDashTeamStats",
+                fields: result.headers,
+                rows: result.rowSet
+            });
+
+        }
+        catch (error) {
+
+            console.error(
+                "[M7] Team analytics request failed:",
+                error.message
+            );
+
+            return res.status(502).json({
+                ok: false,
+                season,
+                dataState: "API_ERROR",
+                source: "LeagueDashTeamStats",
+                fields: [],
+                rows: [],
+                error: error.message
+            });
+        }
+    }
+);
+
+// ============================================================
+// M7 ANALYTICS — END
+// ============================================================
+
+
 app.listen(
     PORT,
     "127.0.0.1",
