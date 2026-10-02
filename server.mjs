@@ -1,4 +1,7 @@
 import express from "express";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import fs from "node:fs";
 
 const app = express();
 
@@ -24,7 +27,24 @@ app.use((req, res, next) => {
     next();
 });
 
-const PORT = 3000;
+const PORT = Number(process.env.PORT || 3000);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const DIST_ROOT = path.join(
+    __dirname,
+    "dist",
+    "courtside-angular-temp"
+);
+
+const BROWSER_DIST = fs.existsSync(
+    path.join(DIST_ROOT, "browser")
+)
+    ? path.join(DIST_ROOT, "browser")
+    : DIST_ROOT;
+
+
+
 
 const NBA_BASE = "https://stats.nba.com/stats";
 
@@ -1128,94 +1148,436 @@ app.get(
    Advanced Player & Team Analytics
    ============================================================ */
 
-// ------------------------------------------------------------
-// PLAYER ANALYTICS
-// GET /api/nba/analytics/players
-//
-// Verified NBA Stats endpoint:
-//   leaguedashplayerstats
-//
-// Verified live fields only.
-// ------------------------------------------------------------
+/* ------------------------------------------------------------
+   M7 ANALYTICS CONFIGURATION
+   ------------------------------------------------------------ */
+
+const ANALYTICS_RESULT_SETS = {
+    players: "LeagueDashPlayerStats",
+    teams: "LeagueDashTeamStats"
+};
+
+const ANALYTICS_FIXTURE_DIR =
+    path.join(
+        process.cwd(),
+        "m7-fixtures"
+    );
+
+const analyticsFixtureCache =
+    new Map();
+
+/* ------------------------------------------------------------
+   VALIDATION / NORMALIZATION
+   ------------------------------------------------------------ */
+
+function normalizeAnalyticsSeason(value) {
+
+    const season =
+        String(
+            value ||
+            currentSeason()
+        ).trim();
+
+    if (!/^\d{4}-\d{2}$/.test(season)) {
+        throw new Error(
+            `Invalid NBA season: ${season}`
+        );
+    }
+
+    return season;
+}
+
+function normalizeAnalyticsSource(value) {
+
+    const source =
+        String(
+            value ||
+            "live"
+        ).trim().toLowerCase();
+
+    if (
+        source !== "live" &&
+        source !== "fixture"
+    ) {
+        throw new Error(
+            `Invalid analytics source: ${source}. Use live or fixture.`
+        );
+    }
+
+    return source;
+}
+
+/* ------------------------------------------------------------
+   FIXTURE LOADER
+   ------------------------------------------------------------ */
+
+async function loadAnalyticsFixture(
+    kind,
+    season
+) {
+
+    const filename =
+        kind === "players"
+            ? `leaguedashplayerstats-${season}.json`
+            : `leaguedashteamstats-${season}.json`;
+
+    const cacheKey =
+        `${kind}:${season}`;
+
+    if (
+        analyticsFixtureCache.has(
+            cacheKey
+        )
+    ) {
+
+        return analyticsFixtureCache.get(
+            cacheKey
+        );
+    }
+
+    const fixturePath =
+        path.join(
+            ANALYTICS_FIXTURE_DIR,
+            filename
+        );
+
+    if (
+        !fs.existsSync(
+            fixturePath
+        )
+    ) {
+
+        throw new Error(
+            `Analytics fixture not found for season ${season}: ${fixturePath}`
+        );
+    }
+
+    const raw =
+        fs.readFileSync(
+            fixturePath,
+            "utf8"
+        );
+
+    let parsed;
+
+    try {
+
+        parsed =
+            JSON.parse(
+                raw
+            );
+
+    } catch (error) {
+
+        throw new Error(
+            `Analytics fixture contains invalid JSON: ${fixturePath}`
+        );
+    }
+
+    analyticsFixtureCache.set(
+        cacheKey,
+        parsed
+    );
+
+    return parsed;
+}
+
+/* ------------------------------------------------------------
+   COMMON RESULT SET MAPPER
+   ------------------------------------------------------------
+   IMPORTANT:
+   resultSet() already converts:
+
+       resultSets[].headers
+       resultSets[].rowSet
+
+   into an array of objects.
+
+   Therefore we must NOT check:
+
+       result.headers
+       result.rowSet
+
+   after calling resultSet().
+   ------------------------------------------------------------ */
+
+function getAnalyticsRows(
+    payload,
+    expectedResultSet
+) {
+
+    const rows =
+        resultSet(
+            payload,
+            expectedResultSet
+        );
+
+    if (
+        !Array.isArray(rows)
+    ) {
+
+        return [];
+    }
+
+    return rows;
+}
+
+/* ------------------------------------------------------------
+   RESPONSE BUILDER
+   ------------------------------------------------------------ */
+
+function buildAnalyticsResponse({
+    dataState,
+    source,
+    season,
+    resultSetName,
+    rows,
+    error
+}) {
+
+    const response = {
+        ok: true,
+        season,
+        dataState,
+        source,
+        resultSet: resultSetName,
+        rows:
+            Array.isArray(rows)
+                ? rows
+                : []
+    };
+
+    if (error) {
+
+        response.ok = false;
+        response.error = error;
+    }
+
+    return response;
+}
+
+/* ------------------------------------------------------------
+   PLAYER ANALYTICS DATA LOADER
+   ------------------------------------------------------------ */
+
+async function loadAnalyticsPlayers(
+    season,
+    source
+) {
+
+    const resultSetName =
+        ANALYTICS_RESULT_SETS.players;
+
+    /* --------------------------------------------------------
+       FIXTURE
+       -------------------------------------------------------- */
+
+    if (
+        source === "fixture"
+    ) {
+
+        const fixture =
+            await loadAnalyticsFixture(
+                "players",
+                season
+            );
+
+        const rows =
+            getAnalyticsRows(
+                fixture,
+                resultSetName
+            );
+
+        return buildAnalyticsResponse({
+            dataState:
+                rows.length > 0
+                    ? "DATA"
+                    : "NO_DATA",
+            source: "fixture",
+            season,
+            resultSetName,
+            rows
+        });
+    }
+
+    /* --------------------------------------------------------
+       LIVE NBA STATS
+       -------------------------------------------------------- */
+
+    const data =
+        await nbaFetchWithRetry(
+            "leaguedashplayerstats",
+            {
+                LeagueID: "00",
+                PerMode: "Totals",
+                PlusMinus: "N",
+                PaceAdjust: "N",
+                Rank: "N",
+                Season: season,
+                SeasonType: "Regular Season",
+                MeasureType: "Base",
+                Month: "0",
+                OpponentTeamID: "0",
+                Period: "0",
+                PlayerExperience: "",
+                PlayerPosition: "",
+                SeasonSegment: "",
+                TeamID: "0",
+                VsConference: "",
+                VsDivision: ""
+            }
+        );
+
+    const rows =
+        getAnalyticsRows(
+            data,
+            resultSetName
+        );
+
+    return buildAnalyticsResponse({
+        dataState:
+            rows.length > 0
+                ? "DATA"
+                : "NO_DATA",
+        source: "live",
+        season,
+        resultSetName,
+        rows
+    });
+}
+
+/* ------------------------------------------------------------
+   TEAM ANALYTICS DATA LOADER
+   ------------------------------------------------------------ */
+
+async function loadAnalyticsTeams(
+    season,
+    source
+) {
+
+    const resultSetName =
+        ANALYTICS_RESULT_SETS.teams;
+
+    /* --------------------------------------------------------
+       FIXTURE
+       -------------------------------------------------------- */
+
+    if (
+        source === "fixture"
+    ) {
+
+        const fixture =
+            await loadAnalyticsFixture(
+                "teams",
+                season
+            );
+
+        const rows =
+            getAnalyticsRows(
+                fixture,
+                resultSetName
+            );
+
+        return buildAnalyticsResponse({
+            dataState:
+                rows.length > 0
+                    ? "DATA"
+                    : "NO_DATA",
+            source: "fixture",
+            season,
+            resultSetName,
+            rows
+        });
+    }
+
+    /* --------------------------------------------------------
+       LIVE NBA STATS
+       -------------------------------------------------------- */
+
+    const data =
+        await nbaFetchWithRetry(
+            "leaguedashteamstats",
+            {
+                Conference: "",
+                Division: "",
+                GameScope: "",
+                GameSegment: "",
+                LastNGames: "0",
+                LeagueID: "00",
+                Location: "",
+                MeasureType: "Base",
+                Month: "0",
+                OpponentTeamID: "0",
+                Outcome: "",
+                PaceAdjust: "N",
+                PerMode: "Totals",
+                Period: "0",
+                PlayerExperience: "",
+                PlayerPosition: "",
+                PlusMinus: "N",
+                Rank: "N",
+                Season: season,
+                SeasonSegment: "",
+                SeasonType: "Regular Season",
+                ShotClockRange: "",
+                StarterBench: "",
+                TeamID: "0",
+                VsConference: "",
+                VsDivision: ""
+            }
+        );
+
+    const rows =
+        getAnalyticsRows(
+            data,
+            resultSetName
+        );
+
+    return buildAnalyticsResponse({
+        dataState:
+            rows.length > 0
+                ? "DATA"
+                : "NO_DATA",
+        source: "live",
+        season,
+        resultSetName,
+        rows
+    });
+}
+
+/* ------------------------------------------------------------
+   PLAYER ANALYTICS ROUTE
+   GET /api/nba/analytics/players
+   ------------------------------------------------------------ */
 
 app.get(
     "/api/nba/analytics/players",
     async (req, res) => {
 
-        const season =
-            String(
-                req.query.season ||
-                currentSeason()
-            ).trim();
+        let season;
+        let source;
 
         try {
 
-            const data =
-                await nbaFetchWithRetry(
-                    "leaguedashplayerstats",
-                    {
-                        LeagueID: "00",
-                        PerMode: "PerGame",
-                        PlusMinus: "N",
-                        PaceAdjust: "N",
-                        Rank: "N",
-                        Season: season,
-                        SeasonType: "Regular Season",
-                        MeasureType: "Base",
-                        Month: "0",
-                        OpponentTeamID: "0",
-                        Period: "0",
-                        PlayerExperience: "",
-                        PlayerPosition: "",
-                        SeasonSegment: "",
-                        TeamID: "0",
-                        VsConference: "",
-                        VsDivision: ""
-                    }
+            season =
+                normalizeAnalyticsSeason(
+                    req.query.season
                 );
 
-            const result =
-                resultSet(
-                    data,
-                    "LeagueDashPlayerStats"
+            source =
+                normalizeAnalyticsSource(
+                    req.query.source
                 );
 
-            if (
-                !result ||
-                !Array.isArray(result.headers) ||
-                !Array.isArray(result.rowSet)
-            ) {
-
-                return res.json({
-                    ok: true,
+            const response =
+                await loadAnalyticsPlayers(
                     season,
-                    dataState: "NO_DATA",
-                    source: "LeagueDashPlayerStats",
-                    fields: [],
-                    rows: []
-                });
-            }
+                    source
+                );
 
-            if (result.rowSet.length === 0) {
-
-                return res.json({
-                    ok: true,
-                    season,
-                    dataState: "NO_DATA",
-                    source: "LeagueDashPlayerStats",
-                    fields: result.headers,
-                    rows: []
-                });
-            }
-
-            return res.json({
-                ok: true,
-                season,
-                dataState: "DATA",
-                source: "LeagueDashPlayerStats",
-                fields: result.headers,
-                rows: result.rowSet
-            });
+            return res.json(
+                response
+            );
 
         }
         catch (error) {
@@ -1225,116 +1587,70 @@ app.get(
                 error.message
             );
 
-            return res.status(502).json({
-                ok: false,
-                season,
-                dataState: "API_ERROR",
-                source: "LeagueDashPlayerStats",
-                fields: [],
-                rows: [],
-                error: error.message
-            });
+            const isClientError =
+                String(error?.message || "")
+                    .startsWith("Invalid analytics source:");
+
+            return res.status(
+                isClientError
+                    ? 400
+                    : 502
+            ).json(
+                buildAnalyticsResponse({
+                    dataState: "API_ERROR",
+                    source:
+                        source || "live",
+                    season:
+                        season ||
+                        String(
+                            req.query.season ||
+                            currentSeason()
+                        ).trim(),
+                    resultSetName:
+                        ANALYTICS_RESULT_SETS.players,
+                    rows: [],
+                    error:
+                        error.message ||
+                        "Player analytics request failed."
+                })
+            );
         }
     }
 );
 
-// ------------------------------------------------------------
-// TEAM ANALYTICS
-// GET /api/nba/analytics/teams
-//
-// Verified NBA Stats endpoint:
-//   leaguedashteamstats
-//
-// Verified live fields only.
-// ------------------------------------------------------------
+/* ------------------------------------------------------------
+   TEAM ANALYTICS ROUTE
+   GET /api/nba/analytics/teams
+   ------------------------------------------------------------ */
 
 app.get(
     "/api/nba/analytics/teams",
     async (req, res) => {
 
-        const season =
-            String(
-                req.query.season ||
-                currentSeason()
-            ).trim();
+        let season;
+        let source;
 
         try {
 
-            const data =
-                await nbaFetchWithRetry(
-                    "leaguedashteamstats",
-                    {
-                        Conference: "",
-                        Division: "",
-                        GameScope: "",
-                        GameSegment: "",
-                        LastNGames: "0",
-                        LeagueID: "00",
-                        Location: "",
-                        MeasureType: "Base",
-                        Month: "0",
-                        OpponentTeamID: "0",
-                        Outcome: "",
-                        PaceAdjust: "N",
-                        PerMode: "PerGame",
-                        Period: "0",
-                        PlayerExperience: "",
-                        PlayerPosition: "",
-                        PlusMinus: "N",
-                        Rank: "N",
-                        Season: season,
-                        SeasonSegment: "",
-                        SeasonType: "Regular Season",
-                        ShotClockRange: "",
-                        StarterBench: "",
-                        TeamID: "0",
-                        VsConference: "",
-                        VsDivision: ""
-                    }
+            season =
+                normalizeAnalyticsSeason(
+                    req.query.season
                 );
 
-            const result =
-                resultSet(
-                    data,
-                    "LeagueDashTeamStats"
+            source =
+                normalizeAnalyticsSource(
+                    req.query.source
                 );
 
-            if (
-                !result ||
-                !Array.isArray(result.headers) ||
-                !Array.isArray(result.rowSet)
-            ) {
-
-                return res.json({
-                    ok: true,
+            const response =
+                await loadAnalyticsTeams(
                     season,
-                    dataState: "NO_DATA",
-                    source: "LeagueDashTeamStats",
-                    fields: [],
-                    rows: []
-                });
-            }
+                    source
+                );
 
-            if (result.rowSet.length === 0) {
-
-                return res.json({
-                    ok: true,
-                    season,
-                    dataState: "NO_DATA",
-                    source: "LeagueDashTeamStats",
-                    fields: result.headers,
-                    rows: []
-                });
-            }
-
-            return res.json({
-                ok: true,
-                season,
-                dataState: "DATA",
-                source: "LeagueDashTeamStats",
-                fields: result.headers,
-                rows: result.rowSet
-            });
+            return res.json(
+                response
+            );
 
         }
         catch (error) {
@@ -1344,27 +1660,99 @@ app.get(
                 error.message
             );
 
-            return res.status(502).json({
-                ok: false,
-                season,
-                dataState: "API_ERROR",
-                source: "LeagueDashTeamStats",
-                fields: [],
-                rows: [],
-                error: error.message
-            });
+            const isClientError =
+                String(error?.message || "")
+                    .startsWith("Invalid analytics source:");
+
+            return res.status(
+                isClientError
+                    ? 400
+                    : 502
+            ).json(
+                buildAnalyticsResponse({
+                    dataState: "API_ERROR",
+                    source:
+                        source || "live",
+                    season:
+                        season ||
+                        String(
+                            req.query.season ||
+                            currentSeason()
+                        ).trim(),
+                    resultSetName:
+                        ANALYTICS_RESULT_SETS.teams,
+                    rows: [],
+                    error:
+                        error.message ||
+                        "Team analytics request failed."
+                })
+            );
         }
     }
 );
 
-// ============================================================
+/* ============================================================
+   M7 ANALYTICS — END
+   ============================================================ */
 // M7 ANALYTICS — END
 // ============================================================
+
+// ============================================================
+// PRODUCTION ANGULAR HOSTING
+// ============================================================
+
+if (!fs.existsSync(BROWSER_DIST)) {
+    console.error("");
+    console.error("============================================================");
+    console.error(" COURTSIDE FRONTEND BUILD NOT FOUND");
+    console.error("============================================================");
+    console.error("");
+    console.error(` Expected Angular build at: ${BROWSER_DIST}`);
+    console.error("");
+    console.error(" Run:");
+    console.error("   npm run build");
+    console.error("");
+    process.exit(1);
+}
+
+console.log(
+    `[COURTSIDE] Serving Angular from ${BROWSER_DIST}`
+);
+
+// Serve Angular static assets.
+app.use(
+    express.static(BROWSER_DIST, {
+        index: "index.html"
+    })
+);
+
+// Angular SPA fallback.
+//
+// API routes remain API routes.
+// Browser routes such as /players/203932 and
+// /analytics/players receive Angular's index.html.
+app.use((req, res, next) => {
+
+    if (
+        req.method !== "GET" &&
+        req.method !== "HEAD"
+    ) {
+        return next();
+    }
+
+    if (req.path === "/api" || req.path.startsWith("/api/")) {
+        return next();
+    }
+
+    return res.sendFile(
+        path.join(BROWSER_DIST, "index.html")
+    );
+});
 
 
 app.listen(
     PORT,
-    "127.0.0.1",
+    "0.0.0.0",
     () => {
 
         console.log("");
@@ -1384,8 +1772,11 @@ app.listen(
         console.log("");
 
         console.log(
-            ` API: http://localhost:${PORT}`
+           ` API: http://localhost:${PORT}`
         );
+console.log(
+    ` Frontend: http://localhost:${PORT}`
+);
 
         console.log(
             ` Season: ${currentSeason()}`
@@ -1447,3 +1838,5 @@ app.listen(
 
     }
 );
+
+
