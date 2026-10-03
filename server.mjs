@@ -1408,26 +1408,44 @@ async function loadAnalyticsPlayers(
         await nbaFetchWithRetry(
             "leaguedashplayerstats",
             {
+                College: "",
+                Conference: "",
+                Country: "",
+                DateFrom: "",
+                DateTo: "",
+                Division: "",
+                DraftPick: "",
+                DraftYear: "",
+                GameScope: "",
+                GameSegment: "",
+                Height: "",
+                LastNGames: "0",
                 LeagueID: "00",
-                PerMode: "Totals",
-                PlusMinus: "N",
-                PaceAdjust: "N",
-                Rank: "N",
-                Season: season,
-                SeasonType: "Regular Season",
+                Location: "",
                 MeasureType: "Base",
                 Month: "0",
                 OpponentTeamID: "0",
+                Outcome: "",
+                PORound: "0",
+                PaceAdjust: "N",
+                PerMode: "Totals",
                 Period: "0",
                 PlayerExperience: "",
                 PlayerPosition: "",
+                PlusMinus: "N",
+                Rank: "N",
+                Season: season,
                 SeasonSegment: "",
+                SeasonType: "Regular Season",
+                ShotClockRange: "",
+                StarterBench: "",
                 TeamID: "0",
+                TwoWay: "",
                 VsConference: "",
-                VsDivision: ""
+                VsDivision: "",
+                Weight: ""
             }
         );
-
     const rows =
         getAnalyticsRows(
             data,
@@ -1838,5 +1856,4 @@ console.log(
 
     }
 );
-
 
