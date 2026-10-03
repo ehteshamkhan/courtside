@@ -69,7 +69,7 @@ import {
 
           <div>
             <span>STAT CONTROL ROOM</span>
-            <strong>{{ filteredRows.length }} PLAYERS</strong>
+            <strong>{{ rows.length > 0 ? filteredRows.length + ' PLAYERS' : 'NO VERIFIED DATA' }}</strong>
           </div>
 
           <button
@@ -284,6 +284,36 @@ import {
 
       </section>
 
+
+      <section
+        class="cs-stats-state empty"
+        *ngIf="
+          !loading &&
+          !error &&
+          rows.length === 0
+        ">
+
+        <span class="state-number">00</span>
+
+        <div>
+
+          <span>NO VERIFIED DATA</span>
+
+          <h2>
+            NO STATS YET
+            <br>
+            FOR {{ filters.season }}.
+          </h2>
+
+          <p>
+            The verified NBA league-leaders feed currently has
+            no rows for this season. Select 2025-26 to view the
+            completed regular-season dataset.
+          </p>
+
+        </div>
+
+      </section>
 
       <section
         class="cs-stats-state empty"
@@ -852,7 +882,7 @@ export class StatsComponent
     team: '',
     position: '',
     conference: '',
-    season: '2026-27',
+    season: '2025-26',
     seasonType: 'Regular Season',
     perMode: 'PerGame',
     statCategory: 'PTS'
@@ -878,7 +908,7 @@ export class StatsComponent
           params['team'] || '';
 
         this.filters.season =
-          params['season'] || '2026-27';
+          params['season'] || '2025-26';
 
         this.filters.seasonType =
           this.normalizeSeasonType(
@@ -1169,7 +1199,226 @@ export class StatsComponent
             aNumber - bNumber
           ) * direction;
 
-        });
+          styles: [`
+    .cs-stats-center {
+      width: min(1400px, 92vw);
+      margin: 0 auto;
+      padding: 58px 0 90px;
+    }
+
+    .cs-stats-controls {
+      margin-top: 28px;
+      padding: 22px;
+      border: 2px solid rgba(16, 16, 16, .18);
+      border-radius: 16px;
+      background: rgba(255, 253, 248, .78);
+      box-shadow: 0 8px 24px rgba(16, 16, 16, .06);
+    }
+
+    .cs-stats-control-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 20px;
+    }
+
+    .cs-stats-control-head > div {
+      display: flex;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 10px 16px;
+    }
+
+    .cs-stats-control-head > div > span {
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .15em;
+    }
+
+    .cs-stats-control-head > div > strong {
+      font-family: 'Archivo Black', sans-serif;
+      font-size: 18px;
+      letter-spacing: -.02em;
+    }
+
+    .cs-stats-reset {
+      flex: 0 0 auto;
+      min-height: 38px;
+      padding: 9px 14px;
+      border: 1.5px solid rgba(16, 16, 16, .22);
+      border-radius: 9px;
+      background: var(--white);
+      color: var(--ink);
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: .1em;
+      cursor: pointer;
+      transition:
+        background .16s ease,
+        border-color .16s ease,
+        transform .16s ease;
+    }
+
+    .cs-stats-reset:hover {
+      background: var(--paper-dark);
+      border-color: rgba(16, 16, 16, .4);
+      transform: translateY(-1px);
+    }
+
+    .cs-stats-filter-grid {
+      display: grid;
+      grid-template-columns:
+        minmax(180px, 1.5fr)
+        repeat(5, minmax(120px, 1fr));
+      gap: 14px;
+    }
+
+    .cs-stats-filter {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      min-width: 0;
+    }
+
+    .cs-stats-filter > span {
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: .13em;
+    }
+
+    .cs-stats-filter input,
+    .cs-stats-filter select {
+      width: 100%;
+      min-width: 0;
+      min-height: 46px;
+      padding: 11px 13px;
+
+      border: 1.5px solid #c9c2b7;
+      border-radius: 10px;
+
+      background: var(--white);
+      color: var(--ink);
+
+      font-family: 'DM Sans', Arial, sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+
+      outline: none;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .9);
+
+      transition:
+        border-color .16s ease,
+        box-shadow .16s ease,
+        background .16s ease;
+    }
+
+    .cs-stats-filter input::placeholder {
+      color: #9b958c;
+      font-weight: 500;
+    }
+
+    .cs-stats-filter input:hover,
+    .cs-stats-filter select:hover {
+      border-color: #aaa297;
+      background: #fffefb;
+    }
+
+    .cs-stats-filter input:focus,
+    .cs-stats-filter select:focus {
+      border-color: var(--blue);
+      background: var(--white);
+      box-shadow:
+        0 0 0 4px rgba(36, 85, 255, .10);
+    }
+
+    .cs-stats-filter select {
+      cursor: pointer;
+    }
+
+    .cs-stats-filter select:disabled,
+    .cs-stats-filter option:disabled {
+      color: #aaa49c;
+    }
+
+    .cs-stats-filter-note {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      margin-top: 18px;
+      padding: 13px 15px;
+      border: 1px solid rgba(16, 16, 16, .10);
+      border-radius: 10px;
+      background: rgba(232, 223, 209, .42);
+    }
+
+    .cs-stats-filter-note strong {
+      flex: 0 0 auto;
+      color: var(--ink);
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: .12em;
+    }
+
+    .cs-stats-filter-note span {
+      color: #5f5a53;
+      font-size: 11px;
+      line-height: 1.5;
+      font-weight: 600;
+    }
+
+    .cs-stats-state.empty {
+      border-radius: 14px;
+    }
+
+    @media (max-width: 1100px) {
+      .cs-stats-filter-grid {
+        grid-template-columns:
+          repeat(2, minmax(0, 1fr));
+      }
+
+      .cs-stats-filter.search-filter {
+        grid-column: span 2;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .cs-stats-center {
+        width: min(94vw, 1400px);
+        padding-top: 38px;
+      }
+
+      .cs-stats-controls {
+        padding: 16px;
+        border-radius: 13px;
+      }
+
+      .cs-stats-control-head {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .cs-stats-reset {
+        width: 100%;
+      }
+
+      .cs-stats-filter-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .cs-stats-filter.search-filter {
+        grid-column: auto;
+      }
+
+      .cs-stats-filter-note {
+        flex-direction: column;
+        gap: 7px;
+      }
+    }
+  `]
+});
 
   }
 
@@ -1369,7 +1618,7 @@ export class StatsComponent
 
       conference: '',
 
-      season: '2026-27',
+      season: '2025-26',
 
       seasonType:
         'Regular Season',
@@ -1544,5 +1793,3 @@ export class StatsComponent
   }
 
 }
-
-
