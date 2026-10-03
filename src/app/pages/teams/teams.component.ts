@@ -352,62 +352,83 @@ export class TeamsComponent implements OnInit {
 
   private normalizeTeams(response: any): CourtSideTeam[] {
 
-    const rows = this.extractRows(response);
+    const rows =
+      this.extractRows(response);
 
     return rows
       .map((row: any, index: number) => {
 
-        const source = row?.team || row;
+        const source =
+          row?.team ||
+          row;
 
         const city =
           this.firstString(
             source?.teamCity,
             source?.city,
+            source?.TEAM_CITY,
             row?.teamCity,
-            row?.city
+            row?.city,
+            row?.TEAM_CITY
           );
 
         const name =
           this.firstString(
             source?.teamName,
             source?.name,
+            source?.TEAM_NAME,
             row?.teamName,
-            row?.name
+            row?.name,
+            row?.TEAM_NAME
           );
 
         const tricode =
           this.firstString(
             source?.teamTricode,
             source?.tricode,
+            source?.TEAM_ABBREVIATION,
+            source?.TEAM_CODE,
             row?.teamTricode,
-            row?.tricode
+            row?.tricode,
+            row?.TEAM_ABBREVIATION,
+            row?.TEAM_CODE
           );
 
         if (!city && !name && !tricode) {
           return null;
         }
 
-        const wins = this.toNumber(
-          source?.wins ??
-          row?.wins ??
-          row?.win ??
-          row?.W
-        );
+        const wins =
+          this.toNumber(
+            source?.wins ??
+            source?.WINS ??
+            row?.wins ??
+            row?.win ??
+            row?.W ??
+            row?.WINS
+          );
 
-        const losses = this.toNumber(
-          source?.losses ??
-          row?.losses ??
-          row?.loss ??
-          row?.L
-        );
+        const losses =
+          this.toNumber(
+            source?.losses ??
+            source?.LOSSES ??
+            row?.losses ??
+            row?.loss ??
+            row?.L ??
+            row?.LOSSES
+          );
 
-        let winPct = this.toNumber(
-          source?.winPct ??
-          source?.winPercentage ??
-          row?.winPct ??
-          row?.winPercentage ??
-          row?.WinPCT
-        );
+        let winPct =
+          this.toNumber(
+            source?.winPct ??
+            source?.winPercentage ??
+            source?.WinPCT ??
+            source?.WIN_PCT ??
+            row?.winPct ??
+            row?.winPercentage ??
+            row?.WinPCT ??
+            row?.WIN_PCT
+          );
 
         if (
           winPct === null &&
@@ -415,31 +436,44 @@ export class TeamsComponent implements OnInit {
           losses !== null &&
           wins + losses > 0
         ) {
-          winPct = wins / (wins + losses);
+          winPct =
+            wins /
+            (wins + losses);
         }
 
         const conferenceRaw =
           this.firstString(
             source?.conference,
+            source?.Conference,
+            source?.CONFERENCE,
             row?.conference,
-            row?.Conference
+            row?.Conference,
+            row?.CONFERENCE
           );
 
         const conference =
-          this.normalizeConference(conferenceRaw);
+          this.normalizeConference(
+            conferenceRaw
+          );
 
         return {
           id:
             source?.teamId ??
+            source?.TeamID ??
+            source?.TEAM_ID ??
             row?.teamId ??
             row?.TeamID ??
+            row?.TEAM_ID ??
             `${tricode || name || 'TEAM'}-${index}`,
 
-          city: city || '',
+          city:
+            city || '',
 
-          name: name || '',
+          name:
+            name || '',
 
-          tricode: tricode || '',
+          tricode:
+            tricode || '',
 
           wins,
 
@@ -452,46 +486,67 @@ export class TeamsComponent implements OnInit {
           division:
             this.firstString(
               source?.division,
+              source?.Division,
+              source?.DIVISION,
               row?.division,
-              row?.Division
+              row?.Division,
+              row?.DIVISION
             ),
 
-          rank: this.toNumber(
-            source?.rank ??
-            row?.rank ??
-            row?.playoffRank ??
-            row?.PlayoffRank ??
-            row?.ConferenceRank
-          ),
+          rank:
+            this.toNumber(
+              source?.rank ??
+              source?.playoffRank ??
+              source?.PlayoffRank ??
+              source?.ConferenceRank ??
+              source?.CONFERENCE_RANK ??
+              source?.PLAYOFF_RANK ??
+              row?.rank ??
+              row?.playoffRank ??
+              row?.PlayoffRank ??
+              row?.ConferenceRank ??
+              row?.CONFERENCE_RANK ??
+              row?.PLAYOFF_RANK
+            ),
 
-          playoffRank: this.toNumber(
-            source?.playoffRank ??
-            row?.playoffRank ??
-            row?.PlayoffRank
-          ),
+          playoffRank:
+            this.toNumber(
+              source?.playoffRank ??
+              source?.PlayoffRank ??
+              source?.PLAYOFF_RANK ??
+              row?.playoffRank ??
+              row?.PlayoffRank ??
+              row?.PLAYOFF_RANK
+            ),
 
-          gamesBack: this.toNumber(
-            source?.gamesBack ??
-            row?.gamesBack ??
-            row?.GB
-          ),
+          gamesBack:
+            this.toNumber(
+              source?.gamesBack ??
+              source?.GB ??
+              row?.gamesBack ??
+              row?.GB
+            ),
 
           streak:
             this.firstString(
               source?.streak,
+              source?.strk,
+              source?.STRK,
               row?.streak,
-              row?.strk
+              row?.strk,
+              row?.STRK
             ),
 
           raw: row
         } as CourtSideTeam;
       })
       .filter(
-        (team: CourtSideTeam | null): team is CourtSideTeam =>
+        (
+          team: CourtSideTeam | null
+        ): team is CourtSideTeam =>
           team !== null
       );
   }
-
   private extractRows(response: any): any[] {
 
     if (Array.isArray(response?.standings)) {

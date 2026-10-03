@@ -512,29 +512,44 @@ export class PlayersComponent implements OnInit, OnDestroy {
           source?.personId ??
           source?.playerId ??
           source?.id ??
+          source?.PERSON_ID ??
+          source?.PLAYER_ID ??
           row?.personId ??
           row?.playerId ??
-          row?.id;
+          row?.id ??
+          row?.PERSON_ID ??
+          row?.PLAYER_ID;
 
-        const firstName =
+        const explicitFirstName =
           this.firstString(
             source?.firstName,
-            row?.firstName
+            source?.FIRST_NAME,
+            row?.firstName,
+            row?.FIRST_NAME
           );
 
-        const lastName =
+        const explicitLastName =
           this.firstString(
             source?.lastName,
-            row?.lastName
+            source?.LAST_NAME,
+            row?.lastName,
+            row?.LAST_NAME
           );
 
         const fullName =
           this.firstString(
             source?.fullName,
             source?.displayName,
+            source?.DISPLAY_FIRST_LAST,
+            source?.DISPLAY_LAST_COMMA_FIRST,
             row?.fullName,
             row?.displayName,
-            [firstName, lastName]
+            row?.DISPLAY_FIRST_LAST,
+            row?.DISPLAY_LAST_COMMA_FIRST,
+            [
+              explicitFirstName,
+              explicitLastName
+            ]
               .filter(Boolean)
               .join(' ')
           );
@@ -547,6 +562,20 @@ export class PlayersComponent implements OnInit, OnDestroy {
           return null;
         }
 
+        const nameParts =
+          fullName
+            .trim()
+            .split(/\s+/);
+
+        const firstName =
+          explicitFirstName ||
+          nameParts[0] ||
+          '';
+
+        const lastName =
+          explicitLastName ||
+          nameParts.slice(1).join(' ');
+
         return {
           id,
 
@@ -558,72 +587,101 @@ export class PlayersComponent implements OnInit, OnDestroy {
 
           teamId:
             source?.teamId ??
+            source?.TEAM_ID ??
             row?.teamId ??
+            row?.TEAM_ID ??
             '',
 
           team:
             this.firstString(
               source?.teamTricode,
               source?.team,
+              source?.TEAM_ABBREVIATION,
+              source?.TEAM_CODE,
+              source?.TEAM_NAME,
               row?.teamTricode,
               row?.team,
-              source?.teamName
+              row?.TEAM_ABBREVIATION,
+              row?.TEAM_CODE,
+              row?.TEAM_NAME
             ),
 
           teamCity:
             this.firstString(
               source?.teamCity,
-              row?.teamCity
+              source?.TEAM_CITY,
+              row?.teamCity,
+              row?.TEAM_CITY
             ),
 
           position:
             this.firstString(
               source?.position,
-              row?.position
+              source?.POSITION,
+              row?.position,
+              row?.POSITION
             ),
 
           jersey:
             this.firstString(
               source?.jerseyNum,
               source?.jersey,
+              source?.JERSEY_NUM,
+              source?.JERSEY,
               row?.jerseyNum,
-              row?.jersey
+              row?.jersey,
+              row?.JERSEY_NUM,
+              row?.JERSEY
             ),
 
           height:
             this.firstString(
               source?.height,
-              row?.height
+              source?.HEIGHT,
+              row?.height,
+              row?.HEIGHT
             ),
 
           weight:
             this.firstString(
               source?.weight,
-              row?.weight
+              source?.WEIGHT,
+              row?.weight,
+              row?.WEIGHT
             ),
 
           country:
             this.firstString(
               source?.country,
               source?.countryCode,
+              source?.COUNTRY,
+              source?.COUNTRY_CODE,
               row?.country,
-              row?.countryCode
+              row?.countryCode,
+              row?.COUNTRY,
+              row?.COUNTRY_CODE
             ),
 
           slug:
             this.firstString(
               source?.playerSlug,
               source?.slug,
+              source?.PLAYER_SLUG,
+              source?.PLAYERCODE,
               row?.playerSlug,
-              row?.slug
+              row?.slug,
+              row?.PLAYER_SLUG,
+              row?.PLAYERCODE
             ),
 
           active:
             this.toBoolean(
               source?.isActive ??
               source?.active ??
+              source?.ROSTERSTATUS ??
               row?.isActive ??
-              row?.active
+              row?.active ??
+              row?.ROSTERSTATUS
             ),
 
           raw: row
@@ -636,7 +694,6 @@ export class PlayersComponent implements OnInit, OnDestroy {
           player !== null
       );
   }
-
   private extractRows(response: any): any[] {
 
     if (Array.isArray(response?.players)) {
