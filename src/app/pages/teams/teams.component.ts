@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { NbaService } from '../../services/nba.service';
@@ -262,7 +262,10 @@ export class TeamsComponent implements OnInit {
   loading = false;
   errorMessage = '';
 
-  constructor(private nba: NbaService) {}
+  constructor(
+    private nba: NbaService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void {
     this.loadTeams();
@@ -276,10 +279,12 @@ export class TeamsComponent implements OnInit {
       next: response => {
         this.teams = this.normalizeTeams(response);
         this.loading = false;
+        this.cdr.markForCheck();
       },
 
       error: () => {
         this.loading = false;
+        this.cdr.markForCheck();
         this.errorMessage =
           'The NBA standings service did not return usable team data.';
       }

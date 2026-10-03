@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 
@@ -294,7 +294,8 @@ export class PlayersComponent implements OnInit, OnDestroy {
   constructor(
     private nba: NbaService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -333,11 +334,13 @@ export class PlayersComponent implements OnInit, OnDestroy {
           this.normalizePlayers(response);
 
         this.loading = false;
+        this.cdr.markForCheck();
       },
 
       error: () => {
 
         this.loading = false;
+        this.cdr.markForCheck();
 
         this.errorMessage =
           'The NBA player directory did not return usable player data.';
