@@ -365,9 +365,11 @@ export class TeamsComponent implements OnInit {
         const city =
           this.firstString(
             source?.teamCity,
+            source?.TeamCity,
             source?.city,
             source?.TEAM_CITY,
             row?.teamCity,
+            row?.TeamCity,
             row?.city,
             row?.TEAM_CITY
           );
@@ -375,23 +377,21 @@ export class TeamsComponent implements OnInit {
         const name =
           this.firstString(
             source?.teamName,
+            source?.TeamName,
             source?.name,
             source?.TEAM_NAME,
             row?.teamName,
+            row?.TeamName,
             row?.name,
             row?.TEAM_NAME
           );
 
         const tricode =
-          this.firstString(
-            source?.teamTricode,
-            source?.tricode,
-            source?.TEAM_ABBREVIATION,
-            source?.TEAM_CODE,
-            row?.teamTricode,
-            row?.tricode,
-            row?.TEAM_ABBREVIATION,
-            row?.TEAM_CODE
+          this.teamTricodeFromRow(
+            source,
+            row,
+            city,
+            name
           );
 
         if (!city && !name && !tricode) {
@@ -403,9 +403,9 @@ export class TeamsComponent implements OnInit {
             source?.wins ??
             source?.WINS ??
             row?.wins ??
+            row?.WINS ??
             row?.win ??
-            row?.W ??
-            row?.WINS
+            row?.W
           );
 
         const losses =
@@ -413,21 +413,25 @@ export class TeamsComponent implements OnInit {
             source?.losses ??
             source?.LOSSES ??
             row?.losses ??
+            row?.LOSSES ??
             row?.loss ??
-            row?.L ??
-            row?.LOSSES
+            row?.L
           );
 
         let winPct =
           this.toNumber(
             source?.winPct ??
-            source?.winPercentage ??
             source?.WinPCT ??
+            source?.winPercentage ??
             source?.WIN_PCT ??
+            source?.pct ??
+            source?.PCT ??
             row?.winPct ??
-            row?.winPercentage ??
             row?.WinPCT ??
-            row?.WIN_PCT
+            row?.winPercentage ??
+            row?.WIN_PCT ??
+            row?.pct ??
+            row?.PCT
           );
 
         if (
@@ -500,13 +504,15 @@ export class TeamsComponent implements OnInit {
               source?.PlayoffRank ??
               source?.ConferenceRank ??
               source?.CONFERENCE_RANK ??
-              source?.PLAYOFF_RANK ??
+              source?.LeagueRank ??
+              source?.LEAGUE_RANK ??
               row?.rank ??
               row?.playoffRank ??
               row?.PlayoffRank ??
               row?.ConferenceRank ??
               row?.CONFERENCE_RANK ??
-              row?.PLAYOFF_RANK
+              row?.LeagueRank ??
+              row?.LEAGUE_RANK
             ),
 
           playoffRank:
@@ -522,19 +528,29 @@ export class TeamsComponent implements OnInit {
           gamesBack:
             this.toNumber(
               source?.gamesBack ??
+              source?.ConferenceGamesBack ??
+              source?.DivisionGamesBack ??
               source?.GB ??
               row?.gamesBack ??
+              row?.ConferenceGamesBack ??
+              row?.DivisionGamesBack ??
               row?.GB
             ),
 
           streak:
             this.firstString(
               source?.streak,
-              source?.strk,
+              source?.currentStreak,
+              source?.CurrentStreak,
+              source?.strCurrentStreak,
               source?.STRK,
+              source?.strk,
               row?.streak,
-              row?.strk,
-              row?.STRK
+              row?.currentStreak,
+              row?.CurrentStreak,
+              row?.strCurrentStreak,
+              row?.STRK,
+              row?.strk
             ),
 
           raw: row
@@ -546,6 +562,130 @@ export class TeamsComponent implements OnInit {
         ): team is CourtSideTeam =>
           team !== null
       );
+  }
+
+  private teamTricodeFromRow(
+    source: any,
+    row: any,
+    city: string,
+    name: string
+  ): string {
+
+    const direct =
+      this.firstString(
+        source?.teamTricode,
+        source?.tricode,
+        source?.teamAbbreviation,
+        source?.TeamAbbreviation,
+        source?.TEAM_ABBREVIATION,
+        source?.teamCode,
+        source?.TeamCode,
+        source?.TEAM_CODE,
+        row?.teamTricode,
+        row?.tricode,
+        row?.teamAbbreviation,
+        row?.TeamAbbreviation,
+        row?.TEAM_ABBREVIATION,
+        row?.teamCode,
+        row?.TeamCode,
+        row?.TEAM_CODE
+      );
+
+    if (direct) {
+      return direct.toUpperCase();
+    }
+
+    const slug =
+      this.firstString(
+        source?.teamSlug,
+        source?.TeamSlug,
+        source?.TEAM_SLUG,
+        row?.teamSlug,
+        row?.TeamSlug,
+        row?.TEAM_SLUG
+      )
+        .toLowerCase();
+
+    const key =
+      `${city} ${name}`
+        .trim()
+        .toLowerCase();
+
+    const aliases: Record<string, string> = {
+
+      'atlanta hawks': 'ATL',
+      'boston celtics': 'BOS',
+      'brooklyn nets': 'BKN',
+      'charlotte hornets': 'CHA',
+      'chicago bulls': 'CHI',
+      'cleveland cavaliers': 'CLE',
+      'dallas mavericks': 'DAL',
+      'denver nuggets': 'DEN',
+      'detroit pistons': 'DET',
+      'golden state warriors': 'GSW',
+      'houston rockets': 'HOU',
+      'indiana pacers': 'IND',
+      'los angeles clippers': 'LAC',
+      'la clippers': 'LAC',
+      'los angeles lakers': 'LAL',
+      'la lakers': 'LAL',
+      'memphis grizzlies': 'MEM',
+      'miami heat': 'MIA',
+      'milwaukee bucks': 'MIL',
+      'minnesota timberwolves': 'MIN',
+      'new orleans pelicans': 'NOP',
+      'new york knicks': 'NYK',
+      'oklahoma city thunder': 'OKC',
+      'orlando magic': 'ORL',
+      'philadelphia 76ers': 'PHI',
+      'phoenix suns': 'PHX',
+      'portland trail blazers': 'POR',
+      'portland trailblazers': 'POR',
+      'sacramento kings': 'SAC',
+      'san antonio spurs': 'SAS',
+      'toronto raptors': 'TOR',
+      'utah jazz': 'UTA',
+      'washington wizards': 'WAS',
+
+      'hawks': 'ATL',
+      'celtics': 'BOS',
+      'nets': 'BKN',
+      'hornets': 'CHA',
+      'bulls': 'CHI',
+      'cavaliers': 'CLE',
+      'mavericks': 'DAL',
+      'nuggets': 'DEN',
+      'pistons': 'DET',
+      'warriors': 'GSW',
+      'rockets': 'HOU',
+      'pacers': 'IND',
+      'clippers': 'LAC',
+      'lakers': 'LAL',
+      'grizzlies': 'MEM',
+      'heat': 'MIA',
+      'bucks': 'MIL',
+      'timberwolves': 'MIN',
+      'pelicans': 'NOP',
+      'knicks': 'NYK',
+      'thunder': 'OKC',
+      'magic': 'ORL',
+      '76ers': 'PHI',
+      'suns': 'PHX',
+      'trail blazers': 'POR',
+      'trailblazers': 'POR',
+      'kings': 'SAC',
+      'spurs': 'SAS',
+      'raptors': 'TOR',
+      'jazz': 'UTA',
+      'wizards': 'WAS'
+    };
+
+    return (
+      aliases[key] ??
+      aliases[name.trim().toLowerCase()] ??
+      aliases[slug] ??
+      ''
+    );
   }
   private extractRows(response: any): any[] {
 
